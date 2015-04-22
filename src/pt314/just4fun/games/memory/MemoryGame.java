@@ -8,6 +8,7 @@ import java.awt.event.*;
 import javax.swing.Timer;
 import javax.swing.*;
 
+import pt314.just4fun.games.memory.game.Card;
 import pt314.just4fun.games.memory.game.Game;
 import pt314.just4fun.games.memory.gui.BoardView;
 import pt314.just4fun.games.memory.gui.PlayerView;
@@ -59,7 +60,7 @@ public class MemoryGame extends JFrame implements ActionListener {
     private ArrayList<Integer> cardList = new ArrayList<Integer>();
 
     // cards selected by player on current turn 
-    private List<Integer> turnCards = new ArrayList<Integer>();
+//    private List<Integer> turnCards = new ArrayList<Integer>();
 
 
     // Images
@@ -243,15 +244,11 @@ public class MemoryGame extends JFrame implements ActionListener {
     	return game.getCurrentPlayer();
     }
    
-    public void switchPlayer() {
-    	game.switchPlayer();
-    }
-
 
 
 	// Card Click
     public void actionPerformed(ActionEvent e) {
-    	if (turnCards.size() == 2)
+    	if (game.getFlippedCardCount() == 2)
     		return;
 
     	JButton theCard = (JButton) e.getSource();
@@ -265,14 +262,11 @@ public class MemoryGame extends JFrame implements ActionListener {
     	getCurrentPlayer().incrementMoves();
         updatePlayerViews();
 
-   		revealCard(buttonIndex);
+   		Card card = revealCard(buttonIndex);
     	
-    	if (turnCards.size() == 2) {
-    		
-    		if (isCardMatch()) {
-        		int cardValue = cardList.get(turnCards.get(0));
-
-            	int extraScore = getMatchScore(cardValue);
+    	if (game.getFlippedCardCount() == 2) {
+    		if (game.isCardMatch()) {
+            	int extraScore = getMatchScore(card.getValue());
                 getCurrentPlayer().incrementScore(extraScore);
                 
                 updatePlayerViews();
@@ -284,34 +278,27 @@ public class MemoryGame extends JFrame implements ActionListener {
                     checkWin();
                     restartGame();
                 }
-	            turnCards.clear();
+	            game.endTurn();
     		}
             else { // not a match
                 addScore = false;
                 updatePlayerViews();
                 disableAllCards();
                 delayAfterNonMatch();
-                switchPlayer();
+                game.switchPlayer();
             }
     	}
         updatePlayerViews();
     }
 
-    private void revealCard(int index) {
+    private Card revealCard(int index) {
+    	Card card = game.flipCard(index);
+    	int cardValue = card.getValue();
     	JButton cardButton = cardButtons[index];
-    	int cardValue = cardList.get(index);
         cardButton.setEnabled(false);
         cardButton.setIcon(cardIcon[cardValue - 1]);
         cardButton.setDisabledIcon(cardIcon[cardValue - 1]);
-        turnCards.add(index);
-    }
-    
-    private boolean isCardMatch() {
-		int cardIdx1 = turnCards.get(0);
-		int cardIdx2 = turnCards.get(1);
-		int cardValue1 = cardList.get(cardIdx1);
-		int cardValue2 = cardList.get(cardIdx2);
-		return cardValue1 == cardValue2;
+        return card;
     }
     
     private int getMatchScore(int cardValue) {
@@ -343,13 +330,14 @@ public class MemoryGame extends JFrame implements ActionListener {
 		Timer setTimer = new Timer(2000, new ActionListener(){
 		    @Override
 		    public void actionPerformed(ActionEvent arg0) {
-		    	int cardIdx1 = turnCards.get(0);
-		    	int cardIdx2 = turnCards.get(1);
+		    	List<Integer> flippedCards = game.getFlippedCardIndices();
+		    	int cardIdx1 = flippedCards.get(0);
+		    	int cardIdx2 = flippedCards.get(1);
 		        cardButtons[cardIdx1].setEnabled(true);
 		        cardButtons[cardIdx1].setIcon(background);
 		        cardButtons[cardIdx2].setEnabled(true);
 		        cardButtons[cardIdx2].setIcon(background);
-	            turnCards.clear();
+	            game.endTurn();
 		        enableUnmatchedCards();
 		    }
 		});
@@ -390,17 +378,14 @@ public class MemoryGame extends JFrame implements ActionListener {
 
     // restart the game
     public void restartGame(){
-        Collections.shuffle(cardList);
         for(int i=0;i<cardButtons.length;i++){
             cardButtons[i].setEnabled(true);
             cardButtons[i].setIcon(background);
         }
 
-        turnCards = new ArrayList<Integer>();
         numPairs = 0;
 
         game = new Game(player1, player2, numCards);
-//        game.restart();
 
         resetPlayerViews();
         updatePlayerViews();
