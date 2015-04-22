@@ -36,8 +36,6 @@ public class MemoryGame extends JFrame implements ActionListener {
     private static boolean addScore = false;
     public static int numCards;
 
-    private Timer setTimer;
-
     // Player stuff...
     private Player player1 = new Player(PlayerThemeManager.getThemes()[0]);
     private Player player2 = new Player(PlayerThemeManager.getThemes()[1]);
@@ -301,29 +299,10 @@ public class MemoryGame extends JFrame implements ActionListener {
                 }
             }
             else { // not a match
-            	
                 addScore = false;
                 updatePlayerViews();
-
                 disableAllCards();
-
-                setTimer = new Timer(2000, (ActionListener) new ActionListener(){
-                    @Override
-                    public void actionPerformed(ActionEvent arg0) {
-                        for(int j=0;j<card.length;j++){
-                            if(card[j].getIcon() == background) card[j].setEnabled(true);
-                        }
-
-                        card[buttonID[0]].setEnabled(true);
-                        card[buttonID[0]].setIcon(background);
-                        card[buttonID[1]].setEnabled(true);
-                        card[buttonID[1]].setIcon(background);
-
-                        setTimer.stop();
-                        setTimer = null;
-                    }
-                });
-                setTimer.start();
+                delayAfterNonMatch();
             }
             counter = 0;
             switchPlayer();
@@ -338,6 +317,29 @@ public class MemoryGame extends JFrame implements ActionListener {
             	card[j].setDisabledIcon(background);
         }
     }
+    
+    private void enableUnmatchedCards() {
+        for(int j = 0; j < card.length; j++)
+            if(card[j].getIcon() == background)
+            	card[j].setEnabled(true);
+    }
+
+	private void delayAfterNonMatch() {
+		Timer setTimer = new Timer(2000, new ActionListener(){
+		    @Override
+		    public void actionPerformed(ActionEvent arg0) {
+		        card[buttonID[0]].setEnabled(true);
+		        card[buttonID[0]].setIcon(background);
+		        card[buttonID[1]].setEnabled(true);
+		        card[buttonID[1]].setIcon(background);
+		        enableUnmatchedCards();
+		    }
+		});
+		setTimer.setRepeats(false);
+		setTimer.start();
+	}
+
+
 
 
     // check to see who won
