@@ -1,6 +1,7 @@
 package pt314.just4fun.games.memory;
 
 import java.util.*;
+import java.util.List;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -30,11 +31,11 @@ public class MemoryGame extends JFrame implements ActionListener {
     
     public static final String IMG_PATH = BASE_PATH + "images//";
 
-    private static int counter = 0;
     private static int numPairs = 0;
     
     private static boolean addScore = false;
     public static int numCards;
+
 
     // Player stuff...
     private Player player1 = new Player(PlayerThemeManager.getThemes()[0]);
@@ -50,7 +51,14 @@ public class MemoryGame extends JFrame implements ActionListener {
     private JPanel middlePanel = new JPanel();
 
     // Game Area
-    private JButton [] card = new JButton[numCards];
+    private JButton [] cardButtons = new JButton[numCards];
+
+    // Card Information
+    private ArrayList<Integer> cardList = new ArrayList<Integer>();
+
+    // cards selected by player on current turn 
+    private List<Integer> turnCards = new ArrayList<Integer>();
+
 
     // Images
     private ImageIcon [] cardIcon = {new ImageIcon(IMG_PATH + "image1.png"), new ImageIcon(IMG_PATH + "image2.png"),
@@ -62,11 +70,6 @@ public class MemoryGame extends JFrame implements ActionListener {
         new ImageIcon(IMG_PATH + "image18.png")};
 
     private ImageIcon background = new ImageIcon(IMG_PATH + "background.png");
-
-    // Card Information
-    private ArrayList<Integer> cardList = new ArrayList<Integer>();
-    private int [] buttonID = new int[2];
-    private int [] buttonVal = new int[2];
 
     private Container pane = getContentPane();
 
@@ -231,7 +234,7 @@ public class MemoryGame extends JFrame implements ActionListener {
     public int getNumberOfCards() {
     	return numCards;
     }
-    
+
     public Player getCurrentPlayer() {
     	return currentPlayer;
     }
@@ -244,48 +247,28 @@ public class MemoryGame extends JFrame implements ActionListener {
 
 	// Card Click
     public void actionPerformed(ActionEvent e) {
+    	if (turnCards.size() == 2)
+    		return;
+
     	JButton theCard = (JButton) e.getSource();
     	int buttonIndex = 0;
-    	for (int i = 0; i < card.length; i++) {
-			if (card[i] == theCard)
+    	for (int i = 0; i < cardButtons.length; i++) {
+			if (cardButtons[i] == theCard)
 				buttonIndex = i;
 		}
-
-    	theCard.setEnabled(false);
-        counter++;
 
     	SoundPlayer.playSound( getCurrentPlayer().getTheme().getSoundFile() );
     	getCurrentPlayer().incrementMoves();
         updatePlayerViews();
 
-        // first card selected
-        if(counter == 1){
-            buttonID[0] = buttonIndex;
-            buttonVal[0] = cardList.get(buttonIndex);
-            theCard.setIcon(cardIcon[buttonVal[0] - 1]);
-            theCard.setDisabledIcon(cardIcon[buttonVal[0]-1]);
-        }
+   		revealCard(buttonIndex);
+    	
+    	if (turnCards.size() == 2) {
+    		
+    		if (isCardMatch()) {
+        		int cardValue = cardList.get(turnCards.get(0));
 
-        // second card selected
-        if(counter == 2) {
-            buttonID[1] = buttonIndex;
-            buttonVal[1] = cardList.get(buttonIndex);
-
-            card[buttonID[0]].setEnabled(false);
-            card[buttonID[1]].setEnabled(false);
-
-            theCard.setIcon(cardIcon[buttonVal[1]-1]);
-            theCard.setDisabledIcon(cardIcon[buttonVal[1] - 1]);
-
-            if(buttonVal[0] == buttonVal[1]){
-            	int extraScore = 0;
-                if(buttonVal[1] % 3 == 0)
-                	extraScore += 2;
-                if(buttonVal[1] % 2 == 0)
-                	extraScore++;
-                if(addScore)
-                	extraScore++;
-                extraScore++;
+            	int extraScore = getMatchScore(cardValue);
                 getCurrentPlayer().incrementScore(extraScore);
                 
                 updatePlayerViews();
@@ -297,41 +280,72 @@ public class MemoryGame extends JFrame implements ActionListener {
                     checkWin();
                     restartGame();
                 }
-            }
+	            turnCards.clear();
+    		}
             else { // not a match
                 addScore = false;
                 updatePlayerViews();
                 disableAllCards();
                 delayAfterNonMatch();
+                switchPlayer();
             }
-            counter = 0;
-            switchPlayer();
-            updatePlayerViews();
-        }
+    	}
+        updatePlayerViews();
     }
 
+    private void revealCard(int index) {
+    	JButton cardButton = cardButtons[index];
+    	int cardValue = cardList.get(index);
+        cardButton.setEnabled(false);
+        cardButton.setIcon(cardIcon[cardValue - 1]);
+        cardButton.setDisabledIcon(cardIcon[cardValue - 1]);
+        turnCards.add(index);
+    }
+    
+    private boolean isCardMatch() {
+		int cardIdx1 = turnCards.get(0);
+		int cardIdx2 = turnCards.get(1);
+		int cardValue1 = cardList.get(cardIdx1);
+		int cardValue2 = cardList.get(cardIdx2);
+		return cardValue1 == cardValue2;
+    }
+    
+    private int getMatchScore(int cardValue) {
+    	int score = 1;
+        if(cardValue % 3 == 0)
+        	score += 2;
+        if(cardValue % 2 == 0)
+        	score++;
+        if(addScore)
+        	score++;
+        return score;
+    }
+    
     private void disableAllCards() {
-        for(int j = 0; j < card.length; j++){
-            card[j].setEnabled(false);
-            if(card[j].getIcon() == background)
-            	card[j].setDisabledIcon(background);
+        for(int j = 0; j < cardButtons.length; j++){
+            cardButtons[j].setEnabled(false);
+            if(cardButtons[j].getIcon() == background)
+            	cardButtons[j].setDisabledIcon(background);
         }
     }
     
     private void enableUnmatchedCards() {
-        for(int j = 0; j < card.length; j++)
-            if(card[j].getIcon() == background)
-            	card[j].setEnabled(true);
+        for(int j = 0; j < cardButtons.length; j++)
+            if(cardButtons[j].getIcon() == background)
+            	cardButtons[j].setEnabled(true);
     }
 
 	private void delayAfterNonMatch() {
 		Timer setTimer = new Timer(2000, new ActionListener(){
 		    @Override
 		    public void actionPerformed(ActionEvent arg0) {
-		        card[buttonID[0]].setEnabled(true);
-		        card[buttonID[0]].setIcon(background);
-		        card[buttonID[1]].setEnabled(true);
-		        card[buttonID[1]].setIcon(background);
+		    	int cardIdx1 = turnCards.get(0);
+		    	int cardIdx2 = turnCards.get(1);
+		        cardButtons[cardIdx1].setEnabled(true);
+		        cardButtons[cardIdx1].setIcon(background);
+		        cardButtons[cardIdx2].setEnabled(true);
+		        cardButtons[cardIdx2].setIcon(background);
+	            turnCards.clear();
 		        enableUnmatchedCards();
 		    }
 		});
@@ -371,12 +385,13 @@ public class MemoryGame extends JFrame implements ActionListener {
     // restart the game
     public void restartGame(){
         Collections.shuffle(cardList);
-        for(int i=0;i<card.length;i++){
-            card[i].setEnabled(true);
-            card[i].setIcon(background);
+        for(int i=0;i<cardButtons.length;i++){
+            cardButtons[i].setEnabled(true);
+            cardButtons[i].setIcon(background);
         }
 
         currentPlayer = player1;
+        turnCards = new ArrayList<Integer>();
         numPairs = 0;
 
         player1.resetScore();
@@ -425,21 +440,21 @@ public class MemoryGame extends JFrame implements ActionListener {
     	middlePanel.removeAll();
         middlePanel.setLayout(new GridLayout(rows, cols));
 
-        card = new JButton[numCards];
+        cardButtons = new JButton[numCards];
 
-        for(int i = 0; i < card.length; i++){
-            card[i] = new JButton();
-            card[i].setIcon(background);
-            card[i].setBorder(BorderFactory.createMatteBorder(4, 4, 4, 4, Color.BLACK));
-            card[i].addActionListener(this);
+        for(int i = 0; i < cardButtons.length; i++){
+            cardButtons[i] = new JButton();
+            cardButtons[i].setIcon(background);
+            cardButtons[i].setBorder(BorderFactory.createMatteBorder(4, 4, 4, 4, Color.BLACK));
+            cardButtons[i].addActionListener(this);
         }
 
-        for(int i = 0; i < card.length; i++)
-        	middlePanel.add(card[i]);
+        for(int i = 0; i < cardButtons.length; i++)
+        	middlePanel.add(cardButtons[i]);
 
         cardList.clear();
         for(int i=0;i<2;i++){
-            for(int j=1;j<(card.length/2)+1;j++){
+            for(int j=1;j<(cardButtons.length/2)+1;j++){
                 cardList.add(j);
             }
         }
