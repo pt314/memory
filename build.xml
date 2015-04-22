@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Modified from: http://ant.apache.org/manual/index.html -->
+<project name="Memory" default="dist" basedir=".">
+
+	<description>
+        Memory game
+    </description>
+
+	<!-- set global properties for this build -->
+	<property name="src" location="src"/>
+	<property name="test" location="test"/>
+	<property name="res" location="res"/>
+	<property name="build" location="build"/>
+	<property name="dist"  location="dist"/>
+	<property name="main-class" value="pt314.just4fun.games.memory.MemoryGame"/>
+
+	<target name="init">
+		<!-- Create the build directory structure used by compile -->
+		<mkdir dir="${build}"/>
+	</target>
+
+	<target name="compile" depends="init" description="compile the source " >
+		<!-- Compile the java code from ${src} into ${build} -->
+		<javac srcdir="${src}" destdir="${build}"/>
+		<!-- Compile the java code from ${test} into ${build} -->
+		<javac srcdir="${test}" destdir="${build}"/>
+	</target>
+	
+	<target name="tests" depends="compile">
+		<!-- Run any unit tests before generating distribution -->
+	</target>
+
+	<target name="dist" depends="tests" description="generate the distribution" >
+		<!-- Copy resources from ${res} into ${build} -->
+		<copy todir="${build}/res">
+			<fileset dir="${res}" includes="**" />
+		</copy>
+		<!-- Create the distribution directory -->
+		<mkdir dir="${dist}"/>
+		<!-- Put everything in ${build} into the Memory.jar file -->
+		<jar jarfile="${dist}/Memory.jar" basedir="${build}">
+			<fileset dir="${res}" includes="**" />
+			<manifest>
+				<attribute name="Main-Class" value="${main-class}"/>
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="clean" description="clean up" >
+		<!-- Delete the ${build} and ${dist} directory trees -->
+		<delete dir="${build}"/>
+		<delete dir="${dist}"/>
+	</target>
+
+	<target name="run" description="run game" >
+		<java jar="${dist}/Memory.jar" fork="true"/>
+	</target>
+
+</project>
