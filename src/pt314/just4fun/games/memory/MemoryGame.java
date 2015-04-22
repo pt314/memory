@@ -241,96 +241,104 @@ public class MemoryGame extends JFrame implements ActionListener {
     public void switchPlayer() {
     	currentPlayer = (currentPlayer == player1) ? player2 : player1;
     }
-   
+
+
+
+	// Card Click
     public void actionPerformed(ActionEvent e) {
-        // Card Click
-        for(int i=0;i<card.length;i++){
-            if(card[i] == e.getSource()){
-                //card[i].setIcon(null);
-                //card[i].setText("" + cardList.get(i));
-                //card[i].setBackground(Color.WHITE);
+    	JButton theCard = (JButton) e.getSource();
+    	int buttonIndex = 0;
+    	for (int i = 0; i < card.length; i++) {
+			if (card[i] == theCard)
+				buttonIndex = i;
+		}
+
+    	theCard.setEnabled(false);
+        counter++;
+
+    	SoundPlayer.playSound( getCurrentPlayer().getTheme().getSoundFile() );
+    	getCurrentPlayer().incrementMoves();
+        updatePlayerViews();
+
+        // first card selected
+        if(counter == 1){
+            buttonID[0] = buttonIndex;
+            buttonVal[0] = cardList.get(buttonIndex);
+            theCard.setIcon(cardIcon[buttonVal[0] - 1]);
+            theCard.setDisabledIcon(cardIcon[buttonVal[0]-1]);
+        }
+
+        // second card selected
+        if(counter == 2) {
+            buttonID[1] = buttonIndex;
+            buttonVal[1] = cardList.get(buttonIndex);
+
+            card[buttonID[0]].setEnabled(false);
+            card[buttonID[1]].setEnabled(false);
+
+            theCard.setIcon(cardIcon[buttonVal[1]-1]);
+            theCard.setDisabledIcon(cardIcon[buttonVal[1] - 1]);
+
+            if(buttonVal[0] == buttonVal[1]){
+            	int extraScore = 0;
+                if(buttonVal[1] % 3 == 0)
+                	extraScore += 2;
+                if(buttonVal[1] % 2 == 0)
+                	extraScore++;
+                if(addScore)
+                	extraScore++;
+                extraScore++;
+                getCurrentPlayer().incrementScore(extraScore);
                 
-            	card[i].setEnabled(false);
-                counter++;
-
-            	SoundPlayer.playSound( getCurrentPlayer().getTheme().getSoundFile() );
-            	getCurrentPlayer().incrementMoves();
-
                 updatePlayerViews();
 
-                // first card selected
-                if(counter == 1){
-                    buttonID[0] = i;
-                    buttonVal[0] = cardList.get(i);
-                    card[i].setIcon(cardIcon[buttonVal[0] - 1]);
-                    card[i].setDisabledIcon(cardIcon[buttonVal[0]-1]);
-                }
+                addScore = true;
 
-                // second card selected
-                if(counter == 2){
-                    buttonID[1] = i;
-                    buttonVal[1] = cardList.get(i);
-
-                    card[buttonID[0]].setEnabled(false);
-                    card[buttonID[1]].setEnabled(false);
-
-                    card[i].setIcon(cardIcon[buttonVal[1]-1]);
-                    card[i].setDisabledIcon(cardIcon[buttonVal[1] - 1]);
-
-                    if(buttonVal[0] == buttonVal[1]){
-                    	int extraScore = 0;
-                        if(buttonVal[1] % 3 == 0)
-                        	extraScore += 2;
-                        if(buttonVal[1] % 2 == 0)
-                        	extraScore++;
-                        if(addScore)
-                        	extraScore++;
-                        extraScore++;
-                        getCurrentPlayer().incrementScore(extraScore);
-                        
-                        updatePlayerViews();
-
-                        addScore = true;
-
-                        numPairs++;
-                        if(numPairs == numCards/2){
-                            checkWin();
-                            restartGame();
-                        }
-                    } else {
-                        addScore = false;
-                        updatePlayerViews();
-
-                        for(int j=0;j<card.length;j++){
-                            card[j].setEnabled(false);
-                            if(card[j].getIcon() == background) card[j].setDisabledIcon(background);
-                        }
-
-                        setTimer = new Timer(2000, (ActionListener) new ActionListener(){
-                            @Override
-                            public void actionPerformed(ActionEvent arg0) {
-                                for(int j=0;j<card.length;j++){
-                                    if(card[j].getIcon() == background) card[j].setEnabled(true);
-                                }
-
-                                card[buttonID[0]].setEnabled(true);
-                                card[buttonID[0]].setIcon(background);
-                                card[buttonID[1]].setEnabled(true);
-                                card[buttonID[1]].setIcon(background);
-
-                                setTimer.stop();
-                                setTimer = null;
-                            }
-                        });
-                        setTimer.start();
-                    }
-                    counter = 0;
-                    switchPlayer();
-                    updatePlayerViews();
+                numPairs++;
+                if(numPairs == numCards/2){
+                    checkWin();
+                    restartGame();
                 }
             }
+            else { // not a match
+            	
+                addScore = false;
+                updatePlayerViews();
+
+                disableAllCards();
+
+                setTimer = new Timer(2000, (ActionListener) new ActionListener(){
+                    @Override
+                    public void actionPerformed(ActionEvent arg0) {
+                        for(int j=0;j<card.length;j++){
+                            if(card[j].getIcon() == background) card[j].setEnabled(true);
+                        }
+
+                        card[buttonID[0]].setEnabled(true);
+                        card[buttonID[0]].setIcon(background);
+                        card[buttonID[1]].setEnabled(true);
+                        card[buttonID[1]].setIcon(background);
+
+                        setTimer.stop();
+                        setTimer = null;
+                    }
+                });
+                setTimer.start();
+            }
+            counter = 0;
+            switchPlayer();
+            updatePlayerViews();
         }
     }
+
+    private void disableAllCards() {
+        for(int j = 0; j < card.length; j++){
+            card[j].setEnabled(false);
+            if(card[j].getIcon() == background)
+            	card[j].setDisabledIcon(background);
+        }
+    }
+
 
     // check to see who won
     public void checkWin(){
