@@ -19,7 +19,7 @@ public class Card {
 		return matched;
 	}
 	
-	public void setMatched(boolean matched) {
-		this.matched = matched;
+	public void setMatched() {
+		this.matched = true;
 	}
 }

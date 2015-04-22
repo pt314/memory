@@ -28,13 +28,10 @@ import pt314.just4fun.games.memory.player.PlayerThemeManager;
  */
 public class MemoryGame extends JFrame implements ActionListener {
 
-	
     public static final String BASE_PATH = "res//";
     
     public static final String IMG_PATH = BASE_PATH + "images//";
 
-    private static int numPairs = 0;
-    
     private static boolean addScore = false;
     public static int numCards;
 
@@ -58,10 +55,6 @@ public class MemoryGame extends JFrame implements ActionListener {
 
     // Card Information
     private ArrayList<Integer> cardList = new ArrayList<Integer>();
-
-    // cards selected by player on current turn 
-//    private List<Integer> turnCards = new ArrayList<Integer>();
-
 
     // Images
     private ImageIcon [] cardIcon = {new ImageIcon(IMG_PATH + "image1.png"), new ImageIcon(IMG_PATH + "image2.png"),
@@ -273,8 +266,7 @@ public class MemoryGame extends JFrame implements ActionListener {
 
                 addScore = true;
 
-                numPairs++;
-                if(numPairs == numCards/2){
+                if (game.isOver()) {
                     checkWin();
                     restartGame();
                 }
@@ -346,8 +338,6 @@ public class MemoryGame extends JFrame implements ActionListener {
 	}
 
 
-
-
     // check to see who won
     public void checkWin(){
     	Player player1 = game.getPlayer1();
@@ -382,8 +372,6 @@ public class MemoryGame extends JFrame implements ActionListener {
             cardButtons[i].setEnabled(true);
             cardButtons[i].setIcon(background);
         }
-
-        numPairs = 0;
 
         game = new Game(player1, player2, numCards);
 

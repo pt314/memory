@@ -31,7 +31,7 @@ public class Game {
     		throw new IllegalArgumentException(
     				"Number of cards must be even: " + numberOfCards);
         cards = new ArrayList<Card>();
-        for (int value = 1; value < numberOfCards / 2; value++) {
+        for (int value = 1; value <= numberOfCards / 2; value++) {
 			cards.add(new Card(value));
 			cards.add(new Card(value));
 		}
@@ -57,8 +57,13 @@ public class Game {
     
     public Card flipCard(int index) {
     	Card card = cards.get(index);
-    	if (!flippedCards.contains(card))
+    	if (!flippedCards.contains(index)) {
     		flippedCards.add(index);
+    		if (isCardMatch()) {
+    			for (Integer i : flippedCards)
+    				cards.get(i).setMatched();
+    		}
+    	}
     	return card;
     }
     
@@ -80,6 +85,13 @@ public class Game {
     
     public void endTurn() {
     	flippedCards.clear();
+    }
+    
+    public boolean isOver() {
+    	for (Card card : cards)
+			if (!card.isMatched())
+				return false;
+		return true;
     }
     
     public void restart() {
