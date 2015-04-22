@@ -8,6 +8,7 @@ import java.awt.event.*;
 import javax.swing.Timer;
 import javax.swing.*;
 
+import pt314.just4fun.games.memory.game.Game;
 import pt314.just4fun.games.memory.gui.BoardView;
 import pt314.just4fun.games.memory.gui.PlayerView;
 import pt314.just4fun.games.memory.player.Player;
@@ -36,15 +37,16 @@ public class MemoryGame extends JFrame implements ActionListener {
     private static boolean addScore = false;
     public static int numCards;
 
+    // The game
+    private Game game;
 
     // Player stuff...
     private Player player1 = new Player(PlayerThemeManager.getThemes()[0]);
     private Player player2 = new Player(PlayerThemeManager.getThemes()[1]);
-    private Player currentPlayer = player1;
     
     // Player and board views
-    private PlayerView player1View = new PlayerView(this, player1);
-    private PlayerView player2View = new PlayerView(this, player2);
+    private PlayerView player1View;
+    private PlayerView player2View;
     private BoardView boardView = new BoardView(this);
     
     // Panels and Image Labels
@@ -87,6 +89,11 @@ public class MemoryGame extends JFrame implements ActionListener {
 
         middlePanel.setPreferredSize(new Dimension(600, 600));
         middlePanel.setSize(600, 600);
+
+        game = new Game(player1, player2);
+        
+        player1View = new PlayerView(this, player1);
+        player2View = new PlayerView(this, player2);
 
         pane.add(player1View, BorderLayout.WEST);
         pane.add(player2View, BorderLayout.EAST);
@@ -236,11 +243,11 @@ public class MemoryGame extends JFrame implements ActionListener {
     }
 
     public Player getCurrentPlayer() {
-    	return currentPlayer;
+    	return game.getCurrentPlayer();
     }
    
     public void switchPlayer() {
-    	currentPlayer = (currentPlayer == player1) ? player2 : player1;
+    	game.switchPlayer();
     }
 
 
@@ -358,6 +365,8 @@ public class MemoryGame extends JFrame implements ActionListener {
 
     // check to see who won
     public void checkWin(){
+    	Player player1 = game.getPlayer1();
+    	Player player2 = game.getPlayer2();
         if(player1.getScore() > player2.getScore()){
             player1.incrementWins();
             player2.incrementLosses();
@@ -390,23 +399,19 @@ public class MemoryGame extends JFrame implements ActionListener {
             cardButtons[i].setIcon(background);
         }
 
-        currentPlayer = player1;
         turnCards = new ArrayList<Integer>();
         numPairs = 0;
 
-        player1.resetScore();
-        player2.resetScore();
-        player1.resetMoves();
-        player2.resetMoves();
-        
+        game.restart();
+
         resetPlayerViews();
         updatePlayerViews();
     }
 
     // reset win, losses, draws
     private void resetScores() {
-        player1.resetScores();
-        player2.resetScores();
+        game.getPlayer1().resetScores();
+        game.getPlayer2().resetScores();
     }
 
     // beginning dialog
