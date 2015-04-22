@@ -90,7 +90,7 @@ public class MemoryGame extends JFrame implements ActionListener {
         middlePanel.setPreferredSize(new Dimension(600, 600));
         middlePanel.setSize(600, 600);
 
-        game = new Game(player1, player2);
+        game = new Game(player1, player2, numCards);
         
         player1View = new PlayerView(this, player1);
         player2View = new PlayerView(this, player2);
@@ -101,9 +101,6 @@ public class MemoryGame extends JFrame implements ActionListener {
 
         updatePlayerViews();
         
-        // board
-        
-
         newBoardPanel(4, 6);
 
         Collections.shuffle(cardList);
@@ -402,7 +399,8 @@ public class MemoryGame extends JFrame implements ActionListener {
         turnCards = new ArrayList<Integer>();
         numPairs = 0;
 
-        game.restart();
+        game = new Game(player1, player2, numCards);
+//        game.restart();
 
         resetPlayerViews();
         updatePlayerViews();
