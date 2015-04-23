@@ -32,7 +32,6 @@ public class MemoryGame extends JFrame implements ActionListener {
     
     public static final String IMG_PATH = BASE_PATH + "images//";
 
-    private static boolean addScore = false;
     public static int numCards;
 
     // The game
@@ -252,28 +251,20 @@ public class MemoryGame extends JFrame implements ActionListener {
 		}
 
     	SoundPlayer.playSound( getCurrentPlayer().getTheme().getSoundFile() );
-    	getCurrentPlayer().incrementMoves();
         updatePlayerViews();
 
    		Card card = revealCard(buttonIndex);
     	
     	if (game.getFlippedCardCount() == 2) {
     		if (game.isCardMatch()) {
-            	int extraScore = getMatchScore(card.getValue());
-                getCurrentPlayer().incrementScore(extraScore);
-                
                 updatePlayerViews();
-
-                addScore = true;
-
                 if (game.isOver()) {
                     checkWin();
                     restartGame();
                 }
-	            game.endTurn();
+	            game.endPlay();
     		}
             else { // not a match
-                addScore = false;
                 updatePlayerViews();
                 disableAllCards();
                 delayAfterNonMatch();
@@ -291,17 +282,6 @@ public class MemoryGame extends JFrame implements ActionListener {
         cardButton.setIcon(cardIcon[cardValue - 1]);
         cardButton.setDisabledIcon(cardIcon[cardValue - 1]);
         return card;
-    }
-    
-    private int getMatchScore(int cardValue) {
-    	int score = 1;
-        if(cardValue % 3 == 0)
-        	score += 2;
-        if(cardValue % 2 == 0)
-        	score++;
-        if(addScore)
-        	score++;
-        return score;
     }
     
     private void disableAllCards() {
@@ -329,7 +309,7 @@ public class MemoryGame extends JFrame implements ActionListener {
 		        cardButtons[cardIdx1].setIcon(background);
 		        cardButtons[cardIdx2].setEnabled(true);
 		        cardButtons[cardIdx2].setIcon(background);
-	            game.endTurn();
+	            game.endPlay();
 		        enableUnmatchedCards();
 		    }
 		});

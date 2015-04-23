@@ -18,12 +18,16 @@ public class Game {
     // Indices of cards flipped by player on current turn
     private List<Integer> flippedCards;
     
+    // Match by current player on current turn
+    private boolean alreadyMatchedOne;
+
     public Game(Player player1, Player player2, int numberOfCards) {
     	this.player1 = player1;
         this.player2 = player2;
         currentPlayer = player1;
         initCards(numberOfCards);
         restart();
+        alreadyMatchedOne = false;
     }
     
     private void initCards(int numberOfCards) {
@@ -35,7 +39,7 @@ public class Game {
 			cards.add(new Card(value));
 			cards.add(new Card(value));
 		}
-        Collections.shuffle(cards);
+//        Collections.shuffle(cards);
         flippedCards = new ArrayList<Integer>();
     }
     
@@ -62,7 +66,14 @@ public class Game {
     		if (isCardMatch()) {
     			for (Integer i : flippedCards)
     				cards.get(i).setMatched();
+            	int extraScore = getMatchScore(card.getValue());
+                getCurrentPlayer().incrementScore(extraScore);
+    			alreadyMatchedOne = true;
     		}
+    		else if (getFlippedCardCount() == 2) {
+    			alreadyMatchedOne = false;
+    		}
+        	getCurrentPlayer().incrementMoves();
     	}
     	return card;
     }
@@ -83,7 +94,7 @@ public class Game {
 		return card1.getValue() == card2.getValue();
     }
     
-    public void endTurn() {
+    public void endPlay() {
     	flippedCards.clear();
     }
     
@@ -101,4 +112,16 @@ public class Game {
         player2.resetMoves();
     	currentPlayer = player1;
     }
+
+    private int getMatchScore(int cardValue) {
+    	int score = 1;
+        if(cardValue % 3 == 0)
+        	score += 2;
+        if(cardValue % 2 == 0)
+        	score++;
+        if(alreadyMatchedOne)
+        	score++;
+        return score;
+    }
+    
 }
