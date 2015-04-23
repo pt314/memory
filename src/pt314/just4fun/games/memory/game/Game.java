@@ -43,6 +43,10 @@ public class Game {
         flippedCards = new ArrayList<Integer>();
     }
     
+    public int getNumberOfCards() {
+    	return cards.size();
+    }
+
     public Player getPlayer1() {
     	return player1;
     }
@@ -103,6 +107,19 @@ public class Game {
 			if (!card.isMatched())
 				return false;
 		return true;
+    }
+    
+    /**
+     * Returns null if game is not over, or if it's a draw.
+     */
+    public Player getWinner() {
+    	if (!isOver())
+    		return null;
+    	if (player1.getScore() > player2.getScore())
+    		return player1;
+    	if (player2.getScore() > player1.getScore())
+    		return player2;
+    	return null;
     }
     
     public void restart() {

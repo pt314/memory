@@ -32,8 +32,6 @@ public class MemoryGame extends JFrame implements ActionListener {
     
     public static final String IMG_PATH = BASE_PATH + "images//";
 
-    public static int numCards;
-
     // The game
     private Game game;
 
@@ -48,12 +46,8 @@ public class MemoryGame extends JFrame implements ActionListener {
     
     // Panels and Image Labels
     private JPanel middlePanel = new JPanel();
-
     // Game Area
-    private JButton [] cardButtons = new JButton[numCards];
-
-    // Card Information
-    private ArrayList<Integer> cardList = new ArrayList<Integer>();
+    private JButton [] cardButtons;
 
     // Images
     private ImageIcon [] cardIcon = {new ImageIcon(IMG_PATH + "image1.png"), new ImageIcon(IMG_PATH + "image2.png"),
@@ -68,7 +62,7 @@ public class MemoryGame extends JFrame implements ActionListener {
 
     private Container pane = getContentPane();
 
-    public MemoryGame() {
+    public MemoryGame(int rows, int cols) {
         super("Memory Game");
         setSize(806, 652);
         setResizable(false);
@@ -80,10 +74,12 @@ public class MemoryGame extends JFrame implements ActionListener {
 
         pane.setLayout(new BorderLayout());
 
+        int numCards = rows * cols;
+        cardButtons = new JButton[numCards];
         middlePanel.setPreferredSize(new Dimension(600, 600));
         middlePanel.setSize(600, 600);
 
-        game = new Game(player1, player2, numCards);
+        game = new Game(player1, player2, rows * cols);
         
         player1View = new PlayerView(this, player1);
         player2View = new PlayerView(this, player2);
@@ -94,10 +90,9 @@ public class MemoryGame extends JFrame implements ActionListener {
 
         updatePlayerViews();
         
-        newBoardPanel(4, 6);
+        newBoardPanel(rows, cols);
 
-        Collections.shuffle(cardList);
-
+        SoundPlayer.music();
         setVisible(true);
     }
     
@@ -169,7 +164,6 @@ public class MemoryGame extends JFrame implements ActionListener {
 
 	            System.out.println(choice);
 	            if(choice == JOptionPane.YES_OPTION){
-	                numCards = rows * cols;
 	                newBoardPanel(rows, cols);
 	            }
 			}
@@ -229,9 +223,9 @@ public class MemoryGame extends JFrame implements ActionListener {
 
 
     public int getNumberOfCards() {
-    	return numCards;
+    	return game.getNumberOfCards();
     }
-
+    
     public Player getCurrentPlayer() {
     	return game.getCurrentPlayer();
     }
@@ -251,21 +245,20 @@ public class MemoryGame extends JFrame implements ActionListener {
 		}
 
     	SoundPlayer.playSound( getCurrentPlayer().getTheme().getSoundFile() );
-        updatePlayerViews();
 
    		Card card = revealCard(buttonIndex);
+        updatePlayerViews();
     	
     	if (game.getFlippedCardCount() == 2) {
     		if (game.isCardMatch()) {
-                updatePlayerViews();
                 if (game.isOver()) {
-                    checkWin();
+                	updatePlayerScores();
+                    showGameResult();
                     restartGame();
                 }
 	            game.endPlay();
     		}
             else { // not a match
-                updatePlayerViews();
                 disableAllCards();
                 delayAfterNonMatch();
                 game.switchPlayer();
@@ -318,32 +311,35 @@ public class MemoryGame extends JFrame implements ActionListener {
 	}
 
 
-    // check to see who won
-    public void checkWin(){
-    	Player player1 = game.getPlayer1();
-    	Player player2 = game.getPlayer2();
-        if(player1.getScore() > player2.getScore()){
-            player1.incrementWins();
-            player2.incrementLosses();
-            ImageIcon player1Icon = player1.getTheme().getImageIcon();
-            JOptionPane.showMessageDialog(null, "Congratulations! \nPlayer One Wins!",
-                    "Win Dialog", JOptionPane.INFORMATION_MESSAGE, player1Icon);
-        }
-        else if(player2.getScore() > player1.getScore()){
-            player2.incrementWins();
-            player1.incrementLosses();
-            ImageIcon player2Icon = player2.getTheme().getImageIcon();
-            JOptionPane.showMessageDialog(null, "Congratulations! \nPlayer Two Wins!",
-                    "Win Dialog", JOptionPane.INFORMATION_MESSAGE, player2Icon);
-        }
-        else if(player2.getScore() == player1.getScore()){
+	private void updatePlayerScores() {
+    	Player winner = game.getWinner();
+    	if (winner != null) {
+            winner.incrementWins();
+            Player loser = (winner == player1) ? player2 : player1;
+            loser.incrementLosses();
+    	}
+    	else {
             player1.incrementTies();
             player2.incrementTies();
-            JOptionPane.showMessageDialog(null, "Tied Game", "Tie Dialog", JOptionPane.PLAIN_MESSAGE);
-        }
-
+    	}
         resetPlayerViews();
         updatePlayerViews();
+	}
+	
+	private void showGameResult(){
+    	Player winner = game.getWinner();
+    	if (winner != null) {
+            ImageIcon playerIcon = winner.getTheme().getImageIcon();
+            String msg = "Congratulations! \n";
+            msg += "Player ";
+            msg += winner == player1 ? "One" : "Two";
+            msg += " Wins!";
+            JOptionPane.showMessageDialog(null, msg,
+                    "Win Dialog", JOptionPane.INFORMATION_MESSAGE, playerIcon);
+    	}
+        else {
+            JOptionPane.showMessageDialog(null, "Tied Game", "Tie Dialog", JOptionPane.PLAIN_MESSAGE);
+        }
     }
 
     // restart the game
@@ -353,7 +349,7 @@ public class MemoryGame extends JFrame implements ActionListener {
             cardButtons[i].setIcon(background);
         }
 
-        game = new Game(player1, player2, numCards);
+        game = new Game(player1, player2, game.getNumberOfCards());
 
         resetPlayerViews();
         updatePlayerViews();
@@ -363,21 +359,6 @@ public class MemoryGame extends JFrame implements ActionListener {
     private void resetScores() {
         game.getPlayer1().resetScores();
         game.getPlayer2().resetScores();
-    }
-
-    // beginning dialog
-    public static void newGameDialog(){
-        Object[] choice = {"Easy", "Medium", "Hard"};
-        String s = (String)JOptionPane.showInputDialog(null, "Please Pick a Difficulty Level: ",
-                "Start Game", JOptionPane.PLAIN_MESSAGE, null, choice, "Easy");
-
-        if((s != null) && (s.length() > 0)){
-            if(s == "Easy") numCards = 16;
-            if(s == "Medium") numCards = 24;
-            if(s == "Hard") numCards = 36;
-        } else {
-            System.exit(0);
-        }
     }
 
     public void updatePlayerViews(){
@@ -396,6 +377,7 @@ public class MemoryGame extends JFrame implements ActionListener {
     	middlePanel.removeAll();
         middlePanel.setLayout(new GridLayout(rows, cols));
 
+        int numCards = rows * cols;
         cardButtons = new JButton[numCards];
 
         for(int i = 0; i < cardButtons.length; i++){
@@ -408,13 +390,6 @@ public class MemoryGame extends JFrame implements ActionListener {
         for(int i = 0; i < cardButtons.length; i++)
         	middlePanel.add(cardButtons[i]);
 
-        cardList.clear();
-        for(int i=0;i<2;i++){
-            for(int j=1;j<(cardButtons.length/2)+1;j++){
-                cardList.add(j);
-            }
-        }
-
         middlePanel.validate();
         middlePanel.updateUI();
 
@@ -423,10 +398,41 @@ public class MemoryGame extends JFrame implements ActionListener {
         restartGame();
     }
 
+    
+    
+
+    
+    
+    // beginning dialog
+    public static void newGameDialog() {
+    	int rows = 0;
+    	int cols = 0;
+    	
+        Object[] choice = {"Easy", "Medium", "Hard"};
+        String s = (String)JOptionPane.showInputDialog(null, "Please Pick a Difficulty Level: ",
+                "Start Game", JOptionPane.PLAIN_MESSAGE, null, choice, "Easy");
+        if((s != null) && (s.length() > 0)){
+            if(s == "Easy") {
+            	rows = 4;
+            	cols = 4;
+            }
+            if(s == "Medium") {
+            	rows = 4;
+            	cols = 6;
+            }
+            if(s == "Hard") {
+            	rows = 6;
+            	cols = 6;
+            }
+        }
+        else {
+            System.exit(0);
+        }
+        new MemoryGame(rows, cols);
+    }
+
     // main
     public static void main(String[] args){
         newGameDialog();
-        SoundPlayer.music();
-        new MemoryGame();
     }
 }
